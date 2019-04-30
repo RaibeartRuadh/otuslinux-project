@@ -1,0 +1,37 @@
+#TODO!!!
+# disable autoindex.conf
+# добавить проверку наличия файла disabled, если он есть то следующие таски не делать
+# можно наверное оформить этот инклюд в виде такска которому передавать переменные
+---
+
+- name: Check is already disabled
+  stat:
+    path: "{{ disabling_config }}.disabled"
+  register: disabled_conf
+  tags: httpd
+
+- name: copy disabling config with disabled postfix in name
+  copy:
+    src: "{{ disabling_config }}"
+    dest: "{{ disabling_config }}.disabled"
+    remote_src: yes
+    owner: root
+    group: root
+    mode: 0644
+  when: not disabled_conf.stat.exists
+    
+- name: remove original config file
+  file:
+    path: "{{ disabling_config }}"
+    state: absent
+  when: not disabled_conf.stat.exists
+    
+- name: create empty config file with original name
+  file:
+    path: "{{ disabling_config }}"
+    state: touch
+    owner: root
+    group: root
+    mode: 0644
+  when: not disabled_conf.stat.exists
+ 

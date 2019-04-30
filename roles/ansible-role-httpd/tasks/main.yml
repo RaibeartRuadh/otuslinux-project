@@ -1,0 +1,119 @@
+# roles/httpd/tasks/main.yml
+---
+
+- include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}.yml"
+    - "{{ ansible_os_family }}.yml"
+  tags: httpd
+
+- name: Ensure Apache is installed
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ httpd_packages }}"
+  tags: httpd
+  
+- name: Add sites available directory
+  file:
+    path: "{{ httpd_sites_available_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+    #recurse: yes
+  tags: httpd
+
+- name: Add sites enabled directory
+  file:
+    path: "{{ httpd_sites_enabled_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+    #recurse: yes
+  tags: httpd 
+
+- name: disable configs and modules fully
+  include_tasks: disable_config.yml
+  with_items: "{{ httpd_confs_to_disable }}"
+  loop_control:
+    loop_var: disabling_config
+  notify: restart httpd
+  tags: httpd
+
+- name: disable legacy modules
+  replace:
+    path: "{{ httpd_00_base_module }}"
+    regexp: '(^LoadModule[ _a-z]*(/{{ item }}\.so)$)'
+    replace: '# \1'
+  with_items: "{{ httpd_00_base_modules_to_disable }}"
+  notify: restart httpd
+  tags: httpd  
+      
+- name: Install main configuration file
+  template:
+    src: httpd.conf.j2
+    dest: "{{ httpd_config }}"
+    owner: root
+    group: root
+    setype: httpd_config_t
+    mode: '0644'
+  notify: restart httpd
+  tags: httpd
+  
+- name: Install additional security configuration file
+  template:
+    src: etc_httpd_conf.d_01-security.conf.j2
+    dest: "{{ httpd_01_security_config }}"
+    owner: root
+    group: root
+    setype: httpd_config_t
+    mode: '0644'
+  notify: restart httpd
+  tags: httpd
+  
+- name: Install additional usability configuration file
+  template:
+    src: etc_httpd_conf.d_02-usability.conf.j2
+    dest: "{{ httpd_02_usability_config }}"
+    owner: root
+    group: root
+    setype: httpd_config_t
+    mode: '0644'
+  notify: restart httpd
+  tags: httpd  
+
+- name: Install status configuration file
+  template:
+    src: etc_httpd_conf.d_status.conf.j2
+    dest: "{{ httpd_status_config }}"
+    owner: root
+    group: root
+    setype: httpd_config_t
+    mode: '0644'
+  notify: restart httpd
+  tags: httpd
+  when: httpd_status_enable
+
+- name: Install certificate files
+  include_tasks: certificates.yml
+  tags: httpd
+
+- name: Install mod_ssl configuration file
+  template:
+    src: ssl.conf.j2
+    dest: "{{ httpd_ssl_config }}"
+    owner: root
+    group: root
+    setype: httpd_config_t
+    mode: '0644'
+  notify: restart httpd
+  tags: httpd
+
+- name: Ensure Apache is always running
+  service:
+    name: httpd
+    state: started
+    enabled: true
+  tags: httpd

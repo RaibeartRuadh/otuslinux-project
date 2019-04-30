@@ -1,0 +1,20 @@
+- name: config | Setting hacluster password
+  user:
+    name:  "{{ pacemaker_hacluster_user }}"
+    password: "{{ pacemaker_hacluster_sha }}"
+  become: true
+
+- name: pcs auth
+  shell: |
+    pcs cluster auth {{ groups['cluster']|join(' ') }} -u {{ pacemaker_hacluster_user }} -p  {{ pacemaker_hacluster_password }}
+    pcs cluster setup --name {{ pacemaker_hacluster_name }} {{ groups['cluster']|join(' ') }}
+    pcs cluster start --all
+
+- name: enable corosync and pacemaker services
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  with_items:
+    - corosync
+    - pacemaker

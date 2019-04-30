@@ -1,0 +1,7 @@
+# roles/httpd/handlers/main.yml
+---
+
+- name: Reload httpd
+  service:
+    name: httpd
+    state: reloaded

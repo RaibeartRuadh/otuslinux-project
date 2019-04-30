@@ -1,0 +1,14 @@
+# {{ ansible_managed }}
+
+# apache http site config template
+# only redirects to https
+
+# {{ httpd_sites_dir }} : /var/www/sites
+
+<VirtualHost *:80>
+    ServerName "{{ httpd_site_fqdn }}"
+    ServerAlias "{{ httpd_site_fqdn }}" "*.{{ httpd_site_fqdn }}"
+    ErrorLog "{{ httpd_sites_dir }}/{{ httpd_site_fqdn }}/error.http.log"
+    CustomLog "{{ httpd_sites_dir }}/{{ httpd_site_fqdn }}/requests.http.log" combined
+    Redirect "/" "https://{{ httpd_site_fqdn }}"
+</VirtualHost>

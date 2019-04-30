@@ -1,0 +1,11 @@
+- name: Up db cluster
+  hosts: db
+  become: true
+  roles:
+     - role: cluster-db
+
+- name: Up web cluster
+  hosts: web
+  become: true
+  roles:
+     - role: cluster-web

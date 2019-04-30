@@ -1,0 +1,11 @@
+- name: Pre drbd config for web cluster
+  hosts: web
+  become: true
+  roles:
+     - role: pre-cluster-setup-all-nodes
+
+- name: Pre drbd config for db cluster
+  hosts: db
+  become: true
+  roles:
+     - role: pre-cluster-setup-all-nodes

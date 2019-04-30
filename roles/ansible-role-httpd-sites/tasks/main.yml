@@ -1,0 +1,113 @@
+# tasks file for ansible-role-httpd-sites
+# SELinux should be disabled to make apache started when changing log's path
+# TODO chechkout howto do the same and not disable SELinux
+---
+
+#- name: Detect apache sites configuration directory location
+- include_vars: "{{ item }}"
+  with_items:
+    - "roles/ansible-role-httpd/defaults/main.yml"
+    - "roles/ansible-role-httpd/vars/RedHat.yml"
+  when: httpd_sites_available_dir is not defined
+
+- name: Detect sites directory
+  stat: 
+    path: "{{ httpd_sites_dir }}"
+  register: httpd_sites_dir_stat
+
+- name: Create sites directory
+  file:
+    path: "{{ httpd_sites_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  when: not httpd_sites_dir_stat.stat.exists
+
+- name: Add http sites configuration files
+  template: 
+    src: httpd_virtualhost_http.conf.j2
+    dest: "{{ httpd_sites_available_dir }}/{{ httpd_site_fqdn }}.conf"
+    owner: root
+    group: root
+    mode: 0660
+  with_items: "{{ httpd_sites }}"
+  loop_control:
+    loop_var: httpd_site_fqdn
+  notify: Reload httpd
+  
+- name: Add https sites configuration files
+  template: 
+    src: httpd_virtualhost_https.conf.j2
+    dest: "{{ httpd_sites_available_dir }}/{{ httpd_site_fqdn }}-ssl.conf"
+    owner: root
+    group: root
+    mode: 0660
+  with_items: "{{ httpd_sites }}"
+  loop_control:
+    loop_var: httpd_site_fqdn
+  notify: Reload httpd
+  
+- name: Create all sites directories
+  file:
+    path: "{{ httpd_sites_dir }}/{{ httpd_site_fqdn }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0660
+  with_items: "{{ httpd_sites }}"
+  loop_control:
+    loop_var: httpd_site_fqdn
+  
+- name: Create all sites public_html directories
+  file:
+    path: "{{ httpd_sites_dir }}/{{ httpd_site_fqdn }}/public_html"
+    state: directory
+    owner: apache
+    group: apache
+    mode: 0660
+  with_items: "{{ httpd_sites }}"
+  loop_control:
+    loop_var: httpd_site_fqdn
+  
+- name: Create all sites upload directories
+  file:
+    path: "{{ httpd_sites_dir }}/{{ httpd_site_fqdn }}/upload"
+    state: directory
+    owner: apache
+    group: apache
+    mode: 0660
+  with_items: "{{ httpd_sites }}"
+  loop_control:
+    loop_var: httpd_site_fqdn
+
+- name: Create all sites tmp directories
+  file:
+    path: "{{ httpd_sites_dir }}/{{ httpd_site_fqdn }}/tmp"
+    state: directory
+    owner: apache
+    group: apache
+    mode: 0660
+  with_items: "{{ httpd_sites }}"
+  loop_control:
+    loop_var: httpd_site_fqdn
+    
+- name: Enable those http sites
+  file:
+    src: "{{ httpd_sites_available_dir }}/{{ httpd_site_fqdn }}.conf"
+    dest: "{{ httpd_sites_enabled_dir }}/{{ httpd_site_fqdn }}.conf"
+    state: link
+  with_items: "{{ httpd_sites }}"
+  loop_control:
+    loop_var: httpd_site_fqdn
+  notify: Reload httpd
+  
+- name: Enable those https sites
+  file:
+    src: "{{ httpd_sites_available_dir }}/{{ httpd_site_fqdn }}-ssl.conf"
+    dest: "{{ httpd_sites_enabled_dir }}/{{ httpd_site_fqdn }}-ssl.conf"
+    state: link
+  with_items: "{{ httpd_sites }}"
+  loop_control:
+    loop_var: httpd_site_fqdn
+  notify: Reload httpd

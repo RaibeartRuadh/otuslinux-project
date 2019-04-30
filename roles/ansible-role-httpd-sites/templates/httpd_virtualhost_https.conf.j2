@@ -1,0 +1,51 @@
+# {{ ansible_managed }}
+
+# apache https site config template
+
+# {{ httpd_sites_dir }} : /var/www/sites
+# Directories to be created:
+#   {{ httpd_sites_dir }} : /var/www/sites/
+#     {{ httpd_sites_dir }}/{{ httpd_site_fqdn }} : /var/www/sites/partner.modernservice.ru/
+#       public_html
+#       upload
+# also should be generated certificate files
+# and should be reloaded apache/httpd
+
+<IfModule mod_ssl.c>
+    <VirtualHost *:443>
+        ServerName "{{ httpd_site_fqdn }}"
+        ServerAlias "{{ httpd_site_fqdn }}" "*.{{ httpd_site_fqdn }}"
+	
+        DocumentRoot {{ httpd_sites_dir }}/{{ httpd_site_fqdn }}/public_html
+        <Directory "{{ httpd_sites_dir }}/{{ httpd_site_fqdn }}/public_html">
+            Options -Indexes
+            AllowOverride All
+            Require all granted
+        </Directory>
+
+        php_admin_value upload_tmp_dir "{{ httpd_sites_dir }}/{{ httpd_site_fqdn }}/upload/"
+		php_value session.save_path "{{ httpd_sites_dir }}/{{ httpd_site_fqdn }}/tmp/"
+
+        ErrorLog "{{ httpd_sites_dir }}/{{ httpd_site_fqdn }}/error.https.log"
+        CustomLog "{{ httpd_sites_dir }}/{{ httpd_site_fqdn }}/requests.https.log" combined
+        
+        SSLEngine on		
+
+        SSLCertificateFile {{ cert_self_cert_path }}
+        SSLCertificateKeyFile {{ cert_self_private_path }}
+#       SSLCertificateChainFile /etc/letsencrypt/live/site_fqdn/chain.pem
+		
+#		<FilesMatch "\.(cgi|shtml|phtml|php)$">
+		<FilesMatch "\.(php)$">
+            SSLOptions +StdEnvVars
+        </FilesMatch>
+#        <Directory /usr/lib/cgi-bin>
+#            SSLOptions +StdEnvVars
+#        </Directory>
+		
+		BrowserMatch "MSIE [2-6]" \
+            nokeepalive ssl-unclean-shutdown \
+            downgrade-1.0 force-response-1.0
+		
+    </VirtualHost>
+</IfModule>

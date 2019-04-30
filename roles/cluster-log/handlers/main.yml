@@ -1,0 +1,6 @@
+---
+# handlers file for cluster-log
+- name: restart rsyslog
+  service:
+    name: rsyslog
+    state: restarted

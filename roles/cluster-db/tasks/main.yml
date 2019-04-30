@@ -1,0 +1,42 @@
+---
+# tasks file for cluster-db
+# executes mostly on db1 (or another node, only one node)
+- name: check os version
+  fail: msg='OS is NOT CentOS 7.x'
+  when: ansible_distribution != 'CentOS' or ansible_distribution_major_version != '7'
+
+- name: prepare drbd for db-cluster
+  shell: |  
+    drbdadm primary --force mysql01
+    mkfs.ext4 -m 0 -L drbd /dev/drbd0
+    tune2fs -c 30 -i 180d /dev/drbd0
+    mount /dev/drbd0 /mnt
+    rsync -a /var/lib/mysql/ /mnt
+    umount /mnt
+    rm -rf /var/lib/mysql/*
+  when: "inventory_hostname == 'db1'"
+    
+
+- name: clear mysql data at all nodes
+  shell: rm -rf /var/lib/mysql/*
+  when: "inventory_hostname != 'db1'"  
+
+- name: setup db cluster
+  shell: | 
+    pcs cluster cib clust_cfg
+    pcs -f clust_cfg property set stonith-enabled=false
+    pcs -f clust_cfg property set no-quorum-policy=ignore
+    pcs -f clust_cfg resource defaults resource-stickiness=200
+    pcs -f clust_cfg resource create mysql_data01 ocf:linbit:drbd drbd_resource=mysql01 op monitor interval=30s
+    pcs -f clust_cfg resource master MySQLClone01 mysql_data01 master-max=1 master-node-max=1 clone-max=2 clone-node-max=1 notify=true
+    pcs -f clust_cfg resource create mysql_fs01 Filesystem device="/dev/drbd0" directory="/var/lib/mysql" fstype="ext4"
+    pcs -f clust_cfg constraint colocation add mysql_fs01 with MySQLClone01 INFINITY with-rsc-role=Master
+    pcs -f clust_cfg constraint order promote MySQLClone01 then start mysql_fs01
+    pcs -f clust_cfg resource create mysql_service01 ocf:heartbeat:mysql binary="/usr/sbin/mysqld" config="/etc/my.cnf" datadir="/var/lib/mysql" pid="/var/run/mysqld/mysqld.pid" socket="/var/lib/mysql/mysql.sock" op start timeout=60s op stop timeout=60s op monitor interval=20s timeout=30s
+    pcs -f clust_cfg constraint colocation add mysql_service01 with mysql_fs01 INFINITY
+    pcs -f clust_cfg constraint order mysql_fs01 then mysql_service01
+    pcs -f clust_cfg resource create mysql_VIP01 ocf:heartbeat:IPaddr2 ip=172.21.200.10 cidr_netmask=32 op monitor interval=30s
+    pcs -f clust_cfg constraint colocation add mysql_VIP01 with mysql_service01 INFINITY
+    pcs -f clust_cfg constraint order mysql_service01 then mysql_VIP01
+    pcs cluster cib-push clust_cfg
+  when: "inventory_hostname == 'db1'"  

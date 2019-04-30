@@ -1,0 +1,11 @@
+- name: Enable central log server to receive input messages
+  hosts: stuff
+  become: true
+  roles:
+     - role: cluster-log
+
+- name: Enable clinets log server to send messages to the central log server
+  hosts: web:db
+  become: true
+  roles:
+     - role: cluster-log-clients

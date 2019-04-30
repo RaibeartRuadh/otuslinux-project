@@ -1,0 +1,4 @@
+# this var with this val given as default for this role
+---
+# if you want to add more then one repo you should change task
+remi_repo_repos_to_enable: "remi-php72"

@@ -1,0 +1,29 @@
+---
+#pre_tasks:
+  - name: Install the MySQL repo and helpers packages
+    package:
+      name: "{{ item }}"
+      state: present
+    when: ansible_os_family == "RedHat"
+    with_items:
+      - 'http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm'
+      - 'yum-utils'
+    
+  - name: Permanent disable all mysql servers 5* version repos
+    command: '/bin/yum-config-manager --disable mysql5*-community'
+    when: ansible_os_family == "RedHat"    
+    
+  - name: Permanent enable preferes mysql servers version repo
+    command: '/bin/yum-config-manager --enable mysql57-community-dmr'
+    when: ansible_os_family == "RedHat"
+
+#  - name: Override variables for MySQL (RedHat).
+#    set_fact:
+#       mysql_daemon: mysqld
+#       mysql_packages: ['mysql-server']
+#       mysql_log_error: /var/log/mysqld.log
+#       mysql_syslog_tag: mysqld
+#       mysql_pid_file: /var/run/mysqld/mysqld.pid
+#       mysql_socket: /var/lib/mysql/mysql.sock
+#       mysql_validate_password: 'OFF'
+#    when: ansible_os_family == "RedHat"

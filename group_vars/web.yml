@@ -1,0 +1,81 @@
+---
+# httpd role vars
+
+httpd_status_enable: true
+
+# ssl cert parameters
+# general
+# 10 years, don't set just a year, it's very short period)
+cert_self_days: 3650
+# private key
+# redhat centos specific
+cert_self_private_path: '/etc/pki/tls/private/apache-selfsigned.key'
+# public key
+cert_self_cert_path: '/etc/ssl/certs/apache-selfsigned.crt'
+
+# cert parameters
+# Email Address
+cert_self_email: 'web@otustest.lan'
+# Country Name (2 letter code)
+cert_self_country: 'RU'
+# State or Province Name (full name)
+cert_self_state: 'Moscow'
+# Locality Name (eg, city) [Default City]
+cert_self_city: 'Moscow'
+# Organization Name (eg, company) [Default Company Ltd]
+cert_self_company: 'Otus test Ltd'
+# Organizational Unit Name (eg, section), for example it could be a companies department
+cert_self_ou: 'IT'
+# Common Name (eg, your name or your server's hostname)
+cert_self_sitename: 'otustest.lan'
+# dh path
+cert_self_dh_path: /etc/ssl/certs/dhparam.pem
+
+# remi-repo role vars  
+remi_repo_repos_to_enable: "remi-php72"
+
+# php role vars
+
+#given in defaults
+php_enablerepo: "remi-php72"
+php_packages_state: latest
+php_date_timezone: "Europe/Moscow"
+php_pdo_mysql_default_socket: '/var/lib/mysql/mysql.sock'
+php_mysqli_default_socket: '/var/lib/mysql/mysql.sock'
+#not given in defaults
+php_upload_max_filesize: "100M"
+php_post_max_size: "150M"
+
+# cluster role vars
+pacemaker_hacluster_name: 'webha'
+pacemaker_hacluster_user: 'hacluster'
+pacemaker_hacluster_password: 'webhaPASS1810'
+# to create password use: mkpasswd --method=sha-512
+pacemaker_hacluster_sha: '$6$p6lSNY/4iMK$HRsdWc0vz6z1rsvoC7gv5fr8tRQkDJMXjX5NBfTHxBG14krB2/yxOJjhKum95Zk7D1C/Vxf1n9eVB89VI6qPX.'
+
+# drbd-install web
+cluster_drbd_src_cfg: drbd_apache-site.res.j2
+cluster_drbd_dest_path: "/etc/drbd.d/apache-site.res"
+cluster_drbd_res_name: "apache-site"
+
+pre_cluster_services_to_stop: ['httpd']
+
+modx_install_dir: "/var/www/html"
+# url provides from modx.com
+#modx_download_url: "https://modx.com/download/direct?id=modx-2.7.1-pl.zip"
+# it's better to use next address, cause no waste time to redirects, etc.
+modx_download_url: "http://modx.s3.amazonaws.com/releases/2.7.1/modx-2.7.1-pl.zip"
+
+modx_database_server: "172.21.200.10"
+modx_database_name: "otus_db"
+modx_database_user: "otus_db"
+modx_database_password: "s1Milarly_$eCur3-passw0rd"
+modx_table_prefix: modx2_
+
+modx_site_server: "172.20.200.5"
+
+modx_admin_username: "otus-modx"
+modx_admin_password: "otusmodxpassword"
+modx_admin_email: "admin@otus.lan"
+
+modx_remove_setup_directory: 0

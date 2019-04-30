@@ -1,0 +1,33 @@
+---
+# tasks file for cluster-web
+# executes mostly on web1 (or another node, only one node)
+- name: check os version
+  fail: msg='OS is NOT CentOS 7.x'
+  when: ansible_distribution != 'CentOS' or ansible_distribution_major_version != '7'
+
+- name: prepare drbd for web-cluster
+  shell: |  
+    drbdadm primary --force apache-site
+    mkfs.ext4 -m 0 -L drbd /dev/drbd0
+    tune2fs -c 30 -i 180d /dev/drbd0
+  when: "inventory_hostname == 'web1'"
+
+- name: setup web cluster
+  shell: | 
+    pcs cluster cib clust_cfg
+    pcs -f clust_cfg property set stonith-enabled=false
+    pcs -f clust_cfg property set no-quorum-policy=ignore
+    pcs -f clust_cfg resource defaults resource-stickiness=200
+    pcs -f clust_cfg resource create apache-site-data ocf:linbit:drbd drbd_resource=apache-site op monitor interval=30s
+    pcs -f clust_cfg resource master apache-site-clone01 apache-site-data master-max=1 master-node-max=1 clone-max=2 clone-node-max=1 notify=true
+    pcs -f clust_cfg resource create apache-site-fs01 Filesystem device="/dev/drbd0" directory="/var/www/html" fstype="ext4"
+    pcs -f clust_cfg constraint colocation add apache-site-fs01 with apache-site-clone01 INFINITY with-rsc-role=Master
+    pcs -f clust_cfg constraint order promote apache-site-clone01 then start apache-site-fs01
+    pcs -f clust_cfg resource create WebServer ocf:heartbeat:apache configfile=/etc/httpd/conf/httpd.conf statusurl="http://127.0.0.1/server-status" op monitor interval=20s timeout=20s
+    pcs -f clust_cfg constraint colocation add WebServer with apache-site-fs01 INFINITY
+    pcs -f clust_cfg constraint order apache-site-fs01 then WebServer
+    pcs -f clust_cfg resource create ClusterIP ocf:heartbeat:IPaddr2 ip=172.20.200.5 cidr_netmask=32 op monitor interval=30s
+    pcs -f clust_cfg constraint colocation add ClusterIP with WebServer INFINITY
+    pcs -f clust_cfg constraint order WebServer then ClusterIP   
+    pcs cluster cib-push clust_cfg
+  when: "inventory_hostname == 'web1'"

@@ -1,0 +1,8 @@
+---
+# web
+pre_cluster_services_to_stop: ['httpd']
+
+
+---
+# db
+pre_cluster_services_to_stop: ['mysql-server']

@@ -1,0 +1,17 @@
+[web]
+web1 ansible_host=127.0.0.1 ansible_port=2200 vm_name=web1 ansible_ssh_private_key_file=.vagrant/machines/web1/virtualbox/private_key
+web2 ansible_host=127.0.0.1 ansible_port=2201 vm_name=web2 ansible_ssh_private_key_file=.vagrant/machines/web2/virtualbox/private_key
+
+[db]
+db1 ansible_host=127.0.0.1 ansible_port=2203 vm_name=db1 ansible_ssh_private_key_file=.vagrant/machines/db1/virtualbox/private_key
+db2 ansible_host=127.0.0.1 ansible_port=2204 vm_name=db2 ansible_ssh_private_key_file=.vagrant/machines/db2/virtualbox/private_key
+
+# For this stand it's isn't necessary to use group of groups
+# Moreover. I need web* and db* be only in one group at the same time to simplifying playbook
+#[cluster:children]
+#web
+#db
+
+[tools]
+stuff ansible_host=127.0.0.1 ansible_port=2202 vm_name=stuff ansible_ssh_private_key_file=.vagrant/machines/stuff/virtualbox/private_key
+firewall ansible_host=127.0.0.1 ansible_port=2222 vm_name=firewall ansible_ssh_private_key_file=.vagrant/machines/firewall/virtualbox/private_key

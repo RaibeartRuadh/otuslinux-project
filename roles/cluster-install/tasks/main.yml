@@ -1,0 +1,56 @@
+---
+# tasks file for cluster-install
+- name: check os version
+  fail: msg='OS is NOT CentOS 7.x'
+  when: ansible_distribution != 'CentOS' or ansible_distribution_major_version != '7'
+  
+- name: install pacemaker packages
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - pacemaker
+    - pcs
+    - psmisc
+    - policycoreutils-python
+  register: rh_cluster_install_packages
+  
+- name: Check if all cluster soft packages were installed
+  set_fact:
+    cluster_install_packages: "{{ rh_cluster_install_packages is defined and rh_cluster_install_packages.changed }}"
+    
+- name: Bind pcsd to ipv4 address family
+  replace:
+    path: /etc/sysconfig/pcsd
+    regexp: "#PCSD_BIND_ADDR='::'"
+    replace: "PCSD_BIND_ADDR='0.0.0.0'"
+  when: cluster_install_packages | bool
+
+# we can't enable here corosync and pacemaker cause no corosync.conf file still created and it's failed to start
+# pacemaker won't run cause corosync not runed
+- name: enable pcsd service
+  service:
+    name: "pcsd"
+    state: started
+    enabled: yes
+
+- name: config | Setting hacluster password
+  user:
+    name:  "{{ pacemaker_hacluster_user }}"
+    password: "{{ pacemaker_hacluster_sha }}"
+  become: true
+
+- name: pcs auth
+  shell: |
+    pcs cluster auth {{ groups[group_names.0]|join(' ') }} -u {{ pacemaker_hacluster_user }} -p  {{ pacemaker_hacluster_password }}
+    pcs cluster setup --name {{ pacemaker_hacluster_name }} {{ groups[group_names.0]|join(' ') }}
+    pcs cluster start --all
+
+- name: enable corosync and pacemaker services
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  with_items:
+    - corosync
+    - pacemaker

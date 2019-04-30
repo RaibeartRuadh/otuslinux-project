@@ -1,0 +1,8 @@
+ExtendedStatus {{ httpd_extended_status }}
+
+<Location "{{ httpd_status_location }}">
+    SetHandler server-status
+    Order Deny,Allow
+    Deny from all
+    Allow from 127.0.0.1
+</Location>

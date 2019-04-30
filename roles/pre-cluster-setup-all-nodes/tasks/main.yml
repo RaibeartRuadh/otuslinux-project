@@ -1,0 +1,19 @@
+---
+# tasks file for pre-cluster-setup-db
+
+- name: check os version
+  fail: msg='OS is NOT CentOS 7.x'
+  when: ansible_distribution != 'CentOS' or ansible_distribution_major_version != '7'
+
+# A reboot may be required after usage. Ansible will not issue this reboot but will let you know when it is required.
+- name: disable selinux (sorry but i had to choose - enabled selinux or finished project)
+  selinux:
+    state: disabled
+
+# don't forget to pass correct services to stop for nodes in variables  
+- name: stop and disable clustering services
+  service:
+    name: "{{ item }}"
+    state: stopped
+    enabled: no
+  with_items: "{{ pre_cluster_services_to_stop }}"

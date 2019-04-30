@@ -1,0 +1,28 @@
+# I think there is not necessary to add when: ansible_os_family == "RedHat"
+# It should be given at more top level of calling this task
+#
+# Remember running command yum-config-manager will executes every time
+# should be added some when clauses to limit it if needed
+---
+- name: Install the MySQL repo and helpers packages
+  package:
+    name: "{{ item }}"
+    state: present
+#  when: ansible_os_family == "RedHat"
+  with_items:
+    - "{{ remi_repo_url }}"
+    - 'yum-utils'
+
+- name: Import remi GPG key.
+  rpm_key:
+    key: "{{ remi_repo_gpg_key_url }}"
+    state: present
+
+# sample if i wan't to disable something before enable something
+#- name: Permanent disable all mysql servers 5* version repos
+#  command: '/bin/yum-config-manager --disable mysql5*-community'
+#  when: ansible_os_family == "RedHat"    
+    
+- name: Permanent enable prefered repos
+  command: '/bin/yum-config-manager --enable {{ remi_repo_repos_to_enable }}'
+#  when: ansible_os_family == "RedHat"

@@ -1,0 +1,21 @@
+- name: Configure web server
+  tags: web
+  become: true
+  hosts: web
+  roles:
+    - ansible-role-httpd
+    - ansible-role-repo-remi
+    - ansible-role-php
+#    - ansible-role-httpd-sites
+
+- name: Configure db
+  tags: db
+  become: true
+  hosts: db
+  roles:
+    - ansible-role-mysql 
+
+#- hosts: cluster
+#  become: true
+#  roles:
+#     - role: pacemaker

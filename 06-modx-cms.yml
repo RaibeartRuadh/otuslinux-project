@@ -1,0 +1,13 @@
+- name: Install modx cms on web cluster
+  hosts: web
+  become: true
+  roles:
+     - role: dhar.modx
+
+- name: Restart clusters web application 
+  hosts: web1
+  become: true
+  tasks:
+    - name: Restart WebSerber resource
+      shell: |
+        pcs resource restart WebServer 

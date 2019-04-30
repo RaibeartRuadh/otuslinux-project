@@ -1,0 +1,4 @@
+# vars file for ansible-role-httpd-sites
+---
+
+httpd_sites_dir: /var/www/sites

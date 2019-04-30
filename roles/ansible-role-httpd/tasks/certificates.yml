@@ -1,0 +1,103 @@
+# roles/httpd/tasks/certificates.yml
+# Install certificate files on the target host
+---
+
+- name: Check if default SSL certificate exists
+  stat:
+    path: "{{ httpd_cert_dir }}/localhost.crt"
+  register: ssl_cert_file
+  when: httpd_ssl_certificate_file == 'localhost.crt'
+  tags: httpd
+
+- name: Generate default SSL certificate
+  command: /usr/libexec/httpd-ssl-gencerts
+  when: >
+    httpd_ssl_certificate_file == 'localhost.crt'
+    and not ssl_cert_file.stat.exists
+  tags: httpd
+  
+- name: Check is already generated custom self signed certificate
+  stat:
+    path: "{{ cert_self_cert_path }}"
+  register: cert_self
+  tags: httpd
+  
+- name: Check is already generated custom self signed certificate private key
+  stat:
+    path: "{{ cert_self_private_path }}"
+  register: cert_self_private
+  tags: httpd
+  
+- name: Generate custom self signed certificate
+  command: '/usr/bin/openssl req -x509 -nodes -days {{ cert_self_days }} -newkey rsa:2048 -keyout {{ cert_self_private_path }} -out {{ cert_self_cert_path }} -subj "/emailAddress={{ cert_self_email }}/C={{ cert_self_country }}/ST={{ cert_self_state }}/L={{ cert_self_city }}/O={{ cert_self_company }}/OU={{ cert_self_ou }}/CN={{ cert_self_sitename }}"'
+  when: >
+    not cert_self.stat.exists
+    and not cert_self_private.stat.exists
+  tags: httpd
+  
+- name: Check is already generated DH params
+  stat:
+    path: "{{ cert_self_dh_path }}"
+  register: cert_self_dh
+  tags: httpd
+  
+- name: Generate custom DH
+  command: '/usr/bin/openssl dhparam -out {{ cert_self_dh_path }} 2048'
+  when: not cert_self_dh.stat.exists
+  tags: httpd
+
+- name: Check do we need to concat dh params in self signed cert return error if need to concat
+  command: /bin/egrep -cq "DH PARAMETERS" {{ cert_self_cert_path }}
+  register: check_cert_self
+  check_mode: no
+  ignore_errors: yes
+  changed_when: no
+
+- name: Concatenate self signed certificate with custom DH
+  shell: cat {{ cert_self_dh_path|quote }} | sudo tee -a {{ cert_self_cert_path|quote }}
+  when: check_cert_self.rc != 0
+  tags: httpd
+  
+#
+#При таком написании краснеть будет во второй и последующий запуск т.к. конкат уже произойдет
+#- name: Check do we need to concat dh params in self signed cert return error if need to concat
+#  shell: '! /bin/egrep -cq "DH PARAMETERS" {{ cert_self_cert_path }}'
+#  register: check_cert_self
+#  check_mode: no
+#  ignore_errors: yes
+#  changed_when: no
+#
+#- name: Concatenate self signed certificate with custom DH
+#  shell: cat {{ cert_self_dh_path|quote }} | sudo tee -a {{ cert_self_cert_path|quote }}
+#  when: check_cert_self.rc == 0
+#  tags: httpd
+#
+  
+  
+- name: Copy user defined key file
+  copy:
+    src: "{{ httpd_ssl_certificate_key_file }}"
+    dest: "{{ httpd_key_dir }}/{{ httpd_ssl_certificate_key_file }}"
+  when: httpd_ssl_certificate_key_file != 'localhost.key'
+  tags: httpd
+
+- name: Copy custom certificate file
+  copy:
+    src: "{{ httpd_ssl_certificate_file }}"
+    dest: "{{ httpd_cert_dir }}/{{ httpd_ssl_certificate_file }}"
+  when: httpd_ssl_certificate_file != 'localhost.crt'
+  tags: httpd
+
+- name: Copy custom certificate chain file
+  copy:
+    src: "{{ httpd_ssl_certificate_chain_file }}"
+    dest: "{{ httpd_cert_dir }}/{{ httpd_ssl_certificate_chain_file }}"
+  when: httpd_ssl_certificate_chain_file is defined
+  tags: httpd
+
+- name: Copy custom CA certificate file
+  copy:
+    src: "{{ httpd_ssl_ca_certificate_file }}"
+    dest: "{{ httpd_cert_dir }}/{{ httpd_ssl_ca_certificate_file }}"
+  when: httpd_ssl_ca_certificate_file is defined
+  tags: httpd

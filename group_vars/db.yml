@@ -1,0 +1,58 @@
+# mysql role vars
+
+#Inside vars/main.yml:
+# password should be strong
+# or mysql_validate_password: 'OFF' should be given
+
+#You can't use simple password if password validation enabled
+#mysql_root_password: super-secure-password
+mysql_root_password: sUp3r-secure_Pa$sw0rd
+
+mysql_bind_address: '0.0.0.0'
+mysql_skip_networking: false
+
+#if you want to change passwords
+#mysql_root_password_update: false
+#mysql_user_password_update: false
+
+# when: ansible_os_family == "RedHat" & vanilla mysql
+mysql_daemon: mysqld
+mysql_packages: ['mysql-server']
+mysql_log_error: /var/log/mysqld.log
+mysql_syslog_tag: mysqld
+mysql_pid_file: /var/run/mysqld/mysqld.pid
+mysql_socket: /var/lib/mysql/mysql.sock
+
+mysql_validate_password: 'OFF'
+    
+
+mysql_databases:
+  - name: otus_db
+#    encoding: latin1
+#    collation: latin1_general_ci
+
+# You can't use simple password if password validation enabled
+mysql_users:
+  - name: otus_db
+    host: "%"
+    password: s1Milarly_$eCur3-passw0rd
+    priv: "otus_db.*:ALL"
+  - name: otus_db
+    host: "localhost"
+    password: s1Milarly_$eCur3-passw0rd
+    priv: "otus_db.*:ALL"    
+
+# cluster role vars
+pacemaker_hacluster_name: 'dbha'
+pacemaker_hacluster_user: 'hacluster'
+pacemaker_hacluster_password: 'dbhaPASS1810'
+# to create password use: mkpasswd --method=sha-512
+pacemaker_hacluster_sha: '$6$S9fSL.NRqM9g$Djdr9kWNJdoKat/dtvQMqYzqYfUGFpXX/Zlf/.VmtpyqNCOmNFa0/ljXHztPshu1XYO288GjYZ8yyfIeMBsHP.'
+
+# drbd-install db
+cluster_drbd_src_cfg: drbd_mysql01.res.j2
+cluster_drbd_dest_path: "/etc/drbd.d/mysql01.res"
+cluster_drbd_res_name: "mysql01"
+
+#pre_cluster_services_to_stop: ['mysql-server']
+pre_cluster_services_to_stop: ['mysqld']

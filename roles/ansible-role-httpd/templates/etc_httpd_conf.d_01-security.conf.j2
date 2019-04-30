@@ -1,0 +1,19 @@
+# Apache HTTP server - main configuration
+#
+# {{ ansible_managed }}
+
+# set, for prod - disable, info about server version and OS on errors etc
+ServerSignature {{ httpd_server_signature }}
+ServerTokens {{ httpd_server_tokens }}
+
+# secure from clickjacking
+Header always append X-Frame-Options SAMEORIGIN
+
+# secure from "mime" based attacks
+Header always set X-Content-Type-Options nosniff
+
+# Disable preloading HSTS for now
+#Header always set Strict-Transport-Security "max-age=63072000; includeSubdomains; preload"
+Header always set Strict-Transport-Security "max-age=63072000; includeSubdomains"
+
+# vim: ft=apache

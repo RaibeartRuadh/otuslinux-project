@@ -1,0 +1,25 @@
+---
+# tasks file for cluster-log-clients
+- name: check os version
+  fail: msg='OS is NOT CentOS 7.x'
+  when: ansible_distribution != 'CentOS' or ansible_distribution_major_version != '7'
+
+- name: add client base log server options
+  template:
+    src: cluster-log-client_etc_rsyslog.conf.j2
+    dest: /etc/rsyslog.conf
+  notify: restart rsyslog
+  
+- name: add applications log files to monitor and send
+  template:
+    src: "cluster-log-client_etc_rsyslog.d_app.conf.j2"
+    dest: "/etc/rsyslog.d/{{ item.conf }}"
+  with_items:
+    - { conf: 'corosync.conf', logfile: '/var/log/cluster/corosync.log', tag:  'cluster-corosync', severity: 'info', facility: 'local1' }
+    - { conf: 'pacemaker.conf', logfile: '/var/log/pacemaker.log', tag:  'cluster-pacemaker', severity: 'info', facility: 'local1' }
+    - { conf: 'pcsd.conf', logfile: '/var/log/pcsd/pcsd.log', tag:  'cluster-pcsd', severity: 'info', facility: 'local1' }
+    - { conf: 'mysqld.conf', logfile: '/var/log/mysqld.log', tag:  'mysql-error', severity: 'info', facility: 'local2' }
+    - { conf: 'httpd-access.conf', logfile: '/var/log/httpd/access_log', tag:  'httpd-access', severity: 'info', facility: 'local3' }
+    - { conf: 'httpd-error.conf', logfile: '/var/log/httpd/error_log', tag:  'httpd-error', severity: 'info', facility: 'local3' }
+  notify: restart rsyslog
+  

@@ -1,0 +1,11 @@
+---
+# tasks file for cluster-log
+- name: check os version
+  fail: msg='OS is NOT CentOS 7.x'
+  when: ansible_distribution != 'CentOS' or ansible_distribution_major_version != '7'
+
+- name: configure log server to receive messages
+  template:
+    src: cluster-log_etc_rsyslog.conf.j2
+    dest: /etc/rsyslog.conf
+  notify: restart rsyslog

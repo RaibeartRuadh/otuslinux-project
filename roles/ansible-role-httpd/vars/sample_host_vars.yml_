@@ -1,0 +1,28 @@
+# setting parameters
+
+# general
+# 10 years, don't set just a year, it's very short period)
+cert_self_days: 3650
+# private key
+# redhat centos specific
+cert_self_private_path: '/etc/pki/tls/private/apache-selfsigned.key'
+# public key
+cert_self_cert_path: '/etc/ssl/certs/apache-selfsigned.crt'
+
+# cert parameters
+# Email Address
+cert_self_email: 'webmaster@example.com'
+# Country Name (2 letter code)
+cert_self_country: 'RU'
+# State or Province Name (full name)
+cert_self_state: 'Moscow'
+# Locality Name (eg, city) [Default City]
+cert_self_city: 'Moscow'
+# Organization Name (eg, company) [Default Company Ltd]
+cert_self_company: 'example Ltd'
+# Organizational Unit Name (eg, section), for example it could be a companies department
+cert_self_ou: 'IT'
+# Common Name (eg, your name or your server's hostname)
+cert_self_sitename: 'example.com'
+
+cert_self_dh_path: /etc/ssl/certs/dhparam.pem

@@ -1,0 +1,10 @@
+---
+#given in defaults
+php_enablerepo: "remi-php72"
+php_packages_state: latest
+php_date_timezone: "Europe/Moscow"
+php_pdo_mysql_default_socket: '/var/lib/mysql/mysql.sock'
+php_mysqli_default_socket: '/var/lib/mysql/mysql.sock'
+#not given in defaults
+php_upload_max_filesize: "900M"
+php_post_max_size: "950M"

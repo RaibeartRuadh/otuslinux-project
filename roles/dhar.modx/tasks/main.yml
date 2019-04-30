@@ -1,0 +1,6 @@
+---
+- include: pre.yml
+- include: modx.yml
+  when: "inventory_hostname == 'web1'"
+#- include: nginx.yml
+#- include: cleanup.yml

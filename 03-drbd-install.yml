@@ -1,0 +1,11 @@
+- name: Install drbd for web cluster
+  hosts: web
+  become: true
+  roles:
+     - role: drbd-install
+
+- name: Install drbd for db cluster
+  hosts: db
+  become: true
+  roles:
+     - role: drbd-install

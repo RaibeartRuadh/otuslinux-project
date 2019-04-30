@@ -1,0 +1,79 @@
+---
+- name: check os version
+  fail: msg='OS is NOT CentOS 7.x'
+  when: ansible_distribution != 'CentOS' or ansible_distribution_major_version != '7'
+
+- name: Install dependencies
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - unzip
+    - php-pecl-mysql
+
+- name: Find PHP ini file
+  shell: php -i | grep 'Loaded Configuration File' | sed -e 's/[^\/]*\(\/.*\)$/\1/'
+  register: modx_php_ini_file
+
+# already done by my role ansible-role-php  
+#- name: Configure PHP
+#  replace: dest={{ modx_php_ini_file.stdout }} regexp='^;date.timezone =$' replace='date.timezone = {{ modx_timezone }}' backup=yes
+#
+
+- name: Create installation directory
+  file:
+    path: "{{ modx_install_dir }}"
+    owner: apache
+    group: apache
+    mode: 0751
+    recurse: yes
+    state: directory
+
+- name: Get MODX distribution zipfile
+  get_url: 
+    url: "{{ modx_download_url }}"
+    dest: "{{ modx_install_dir }}"
+    owner: apache
+    group: apache
+    mode: 0751
+  register: got_modx
+
+#- debug:
+#    msg: "modx downloaded to: {{ got_modx.dest }}"
+#  when: got_modx is defined
+  
+- name: Unzip MODX
+  shell: | 
+    unzip -o {{ got_modx.dest }}
+    mv modx*/* .
+    rm -rf modx*
+    chown -R apache:apache {{ modx_install_dir }}
+  args:
+    chdir: "{{ modx_install_dir }}"
+  when: got_modx is defined and got_modx is changed
+    
+- name: Configure MODX installation
+  template: 
+    src: "modx_install_config.xml.j2"
+    dest: "{{ modx_install_dir }}/setup/config.xml"
+    owner: apache
+    group: apache
+    mode: 0640
+  when: got_modx is defined and got_modx is changed
+
+# not necessary?
+- name: Touch blank config file
+  file: 
+    path: "{{ modx_install_dir }}/core/config/config.inc.php"
+    state: touch
+  when: got_modx is defined and got_modx is changed
+
+- name: Install MODX
+  command: "php ./index.php --installmode=new"
+  args:
+    chdir: "{{ modx_install_dir }}/setup/"
+  when: got_modx is defined and got_modx is changed
+
+# already done
+#- name: Clean up MODX installation
+#  file: path={{ modx_install_dir }}/modx-{{ modx_version }}/setup state=absent

@@ -1,0 +1,6 @@
+*.retry
+*/__pycache__
+*.pyc
+
+# ignore windows notepad++ backup files. When file modified creates dir nppBackup with backuped changed files
+nppBackup/

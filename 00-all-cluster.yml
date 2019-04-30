@@ -1,0 +1,90 @@
+- name: Configure web server
+  tags: web
+  become: true
+  hosts: web
+  roles:
+    - ansible-role-httpd
+    - ansible-role-repo-remi
+    - ansible-role-php
+#    - ansible-role-httpd-sites
+
+- name: Configure db
+  tags: db
+  become: true
+  hosts: db
+  roles:
+    - ansible-role-mysql 
+
+- name: Setup web cluster software
+  hosts: web
+  become: true
+  roles:
+     - role: cluster-install
+
+- name: Setup db cluster software
+  hosts: db
+  become: true
+  roles:
+     - role: cluster-install
+
+- name: Install drbd for web cluster
+  hosts: web
+  become: true
+  roles:
+     - role: drbd-install
+
+- name: Install drbd for db cluster
+  hosts: db
+  become: true
+  roles:
+     - role: drbd-install
+
+- name: Pre drbd config for web cluster
+  hosts: web
+  become: true
+  roles:
+     - role: pre-cluster-setup-all-nodes
+
+- name: Pre drbd config for db cluster
+  hosts: db
+  become: true
+  roles:
+     - role: pre-cluster-setup-all-nodes
+
+- name: Up db cluster
+  hosts: db
+  become: true
+  roles:
+     - role: cluster-db
+
+- name: Up web cluster
+  hosts: web
+  become: true
+  roles:
+     - role: cluster-web
+
+- name: Install modx cms on web cluster
+  hosts: web
+  become: true
+  roles:
+     - role: dhar.modx
+     
+- name: Restart clusters web application 
+  hosts: web1
+  become: true
+  tasks:
+    - name: Restart WebSerber resource
+      shell: |
+        pcs resource restart WebServer 
+
+- name: Enable central log server to receive input messages
+  hosts: stuff
+  become: true
+  roles:
+     - role: cluster-log
+
+- name: Enable clinets log server to send messages to the central log server
+  hosts: web:db
+  become: true
+  roles:
+     - role: cluster-log-clients

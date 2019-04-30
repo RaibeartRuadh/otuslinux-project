@@ -1,0 +1,9 @@
+# Apache HTTP server - main configuration
+#
+# {{ ansible_managed }}
+
+# tcp session reuse
+# https://www.svennd.be/keepalive-on-or-off-apache-tuning/
+KeepAlive {{ httpd_keep_alive }}
+
+# vim: ft=apache

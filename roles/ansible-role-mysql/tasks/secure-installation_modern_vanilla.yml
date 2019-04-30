@@ -1,0 +1,79 @@
+# this tasks running for modern (>= 5.7) vanilla/orcale mysql servers only
+# setting up performind only by root user
+# if this is first run no ~/.my.cnf would be present
+# This is setup for first run only?
+
+# TODO password validation is cool but not now
+# check should we disable password validation feature
+# it's possible to give this option only after successful installation 
+# and module registration
+# TODO also should change my.cnf.j2 template
+
+---
+ 
+- name: Get temporary generated root password string from log file step 1
+  shell: "/bin/grep 'temporary password' {{ mysql_log_error }}"
+  register: mysql_temp_root_password_string
+    
+- name: Get temporary generated root password step 2 (final) and backup users given root password
+  set_fact:
+    mysql_root_password_backup: "{{ mysql_root_password }}"
+    mysql_root_password: "{{ mysql_temp_root_password_string.stdout | regex_search('^.*temporary password.*root@localhost: (.*)$','\\1') | first }}"
+  when: > 
+    mysql_temp_root_password_string is defined
+    and mysql_temp_root_password_string.stdout is defined
+
+- name: Copy .my.cnf file with root password credentials (with temp, first run password)
+  template:
+    src: "root-my.cnf.j2"
+    dest: "{{ mysql_root_home }}/.my.cnf"
+    owner: root
+    group: root
+    mode: 0600
+  # legacy register var not need now. Saved for examples
+  #register: mysql_copy_root_my_cnf
+  
+#- name: Test root password
+#  shell: "mysql -u root -p{{ mysql_root_password | quote }}  --connect-expired-password -NBe 'show databases;'"
+#  register: mysql_test_root_password
+#  check_mode: no
+# ignore_errors: yes
+#  changed_when: no
+  
+#- name: Analyze test root password result. If succeess swap root password back
+#  set_fact:
+#    mysql_root_password: {{ mysql_root_password_backup }}
+#    mysql_root_password_backup: ""
+#  when: > 
+# sample conditions also need condotopns is failed and changed etc
+#    (mysql_test_temp_password.rc != 0
+#    and mysql_test_temp_password.stderr is search('You must reset your password'))
+#    and ('5.7.' in mysql_cli_version.stdout or '8.0.' in mysql_cli_version.stdout)
+  
+- name: Swap users defined root password back
+  set_fact:
+    mysql_root_password: "{{ mysql_root_password_backup }}"
+    mysql_root_password_backup: ""
+
+#mysql_install_packages will be true only when dependancy task was changed 
+- name: Update MySQL root password for localhost root account when first install. mandatory
+  shell: >
+    mysql -u root --connect-expired-password -NBe
+    'ALTER USER "{{ mysql_root_username }}"@"localhost"
+    IDENTIFIED WITH mysql_native_password BY "{{ mysql_root_password }}";'
+  register: mysql_updated_root_password_first_install
+#  when: (mysql_install_packages | bool)
+    
+- name: Rewrite .my.cnf file with root password credentials (user defined password)
+  template:
+    src: "root-my.cnf.j2"
+    dest: "{{ mysql_root_home }}/.my.cnf"
+    owner: root
+    group: root
+    mode: 0600
+  #register: mysql_copy_root_my_cnf
+  when: > 
+    mysql_updated_root_password_first_install is defined
+    and mysql_updated_root_password_first_install.changed is defined
+    and mysql_updated_root_password_first_install.changed
+

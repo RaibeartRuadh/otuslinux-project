@@ -1,0 +1,7 @@
+# part of rsyslog configuration file
+
+input(type="imfile"
+      File="{{ item.logfile }}"
+      Tag="{{ item.tag }}"
+      Severity="{{ item.severity }}"
+      Facility="{{ item.facility }}")

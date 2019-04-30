@@ -1,0 +1,12 @@
+---
+# drbd-install db
+cluster_drbd_src_cfg: drbd_mysql01.res.j2
+cluster_drbd_dest_path: "/etc/drbd.d/mysql01.res"
+cluster_drbd_res_name: "mysql01"
+
+
+---
+# drbd-install web
+cluster_drbd_src_cfg: drbd_apache-site.res.j2
+cluster_drbd_dest_path: "/etc/drbd.d/apache-site.res"
+cluster_drbd_res_name: "apache-site"

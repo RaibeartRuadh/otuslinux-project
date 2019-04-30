@@ -1,0 +1,9 @@
+---
+#some_array_var: [] # example of empty list
+#  - src: path/relative/to/playbook/file.cnf # example of one another named parameter
+#  - { src: path/relative/to/playbook/anotherfile.cnf, force: yes } # example myltiple parameters
+
+httpd_sites:
+  - "help.extekh.lan"
+  - "glpi.extekh.lan"
+  - "oee.extekh.lan"

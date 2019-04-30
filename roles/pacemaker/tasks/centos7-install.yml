@@ -1,0 +1,38 @@
+---
+- name: check os version
+  fail: msg='OS is NOT CentOS 7.x'
+  when: ansible_distribution != 'CentOS' or ansible_distribution_major_version != '7'
+  
+- name: install pacemaker packages
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - pacemaker
+    - pcs
+    - psmisc
+    - policycoreutils-python
+
+- name: "Build hosts file"
+  lineinfile: dest=/etc/hosts regexp='.*{{ item }}$' line="{{ hostvars[item].ansible_host }} {{item}}" state=present
+  when: hostvars[item].ansible_default_ipv4.address is defined
+  with_items: "{{ groups['cluster'] }}"
+
+- name: Set authorized key took from file
+  authorized_key:
+    user: root
+    state: present
+    key: "{{ lookup('file', 'id_rsa.pub') }}"
+
+- name: Copy the private_key
+  copy:
+    src: "id_rsa"
+    dest: /root/.ssh/id_rsa
+
+# we can't enable here corosync and pacemaker cause no corosync.conf file still created and it's failed to start
+# pacemaker won't run cause corosync not runed
+- name: enable pcsd service
+  service:
+    name: "pcsd"
+    state: started
+    enabled: yes

@@ -1,0 +1,19 @@
+- name: Setup web cluster software
+  hosts: web
+  become: true
+  roles:
+     - role: cluster-install
+
+- name: Setup db cluster software
+  hosts: db
+  become: true
+  roles:
+     - role: cluster-install
+     
+# also we need to add all nodes names and ipv4 addresses to all nodes /etc/hosts files
+# tsykunov made it:
+#
+#- name: "Build hosts file"
+#  lineinfile: dest=/etc/hosts regexp='.*{{ item }}$' line="{{ hostvars[item].ansible_host }} {{item}}" state=present
+#  when: hostvars[item].ansible_default_ipv4.address is defined
+#  with_items: "{{ groups['cluster'] }}"

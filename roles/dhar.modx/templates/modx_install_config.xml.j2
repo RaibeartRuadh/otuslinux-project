@@ -1,0 +1,53 @@
+<!-- [root@web1 modx-2.7.1-pl]# cat setup/config.dist.new.xml -->
+<!--
+ This file is part of MODX Revolution.
+
+ Copyright (c) MODX, LLC. All Rights Reserved.
+
+ For the full copyright and license information, please view the LICENSE
+ file that was distributed with this source code.
+-->
+<modx>
+    <database_type>mysql</database_type>
+    <database_server>{{ modx_database_server }}</database_server>
+    <database>{{ modx_database_name }}</database>
+    <database_user>{{ modx_database_user }}</database_user>
+    <database_password>{{ modx_database_password }}</database_password>
+    <database_connection_charset>{{ modx_database_charset }}</database_connection_charset>
+    <database_charset>{{ modx_database_charset }}</database_charset>
+    <database_collation>{{ modx_database_collation }}</database_collation>
+    <table_prefix>{{ modx_table_prefix }}</table_prefix>
+    <https_port>443</https_port>
+    <http_host>{{ modx_site_server }}</http_host>
+
+    <!-- Set this to 1 if you are using MODX from Git or extracted it from the full MODX package to the server prior
+         to installation. -->
+    <inplace>1</inplace>
+
+    <!-- Set this to 1 if you have manually extracted the core package from the file core/packages/core.transport.zip.
+         This will reduce the time it takes for the installation process on systems that do not allow the PHP time_limit
+         and Apache script execution time settings to be altered. -->
+    <unpacked>0</unpacked>
+
+    <!-- The language to install MODX for. This will set the default manager language to this. Use IANA codes. -->
+    <language>{{ modx_language }}</language>
+
+    <!-- Information for your administrator account -->
+    <cmsadmin>{{ modx_admin_username }}</cmsadmin>
+    <cmspassword>{{ modx_admin_password }}</cmspassword>
+    <cmsadminemail>{{ modx_admin_email }}</cmsadminemail>
+
+    <!-- Paths for your MODX core directory -->
+    <core_path>{{ modx_install_dir }}/core/</core_path>
+
+    <!-- Paths for the default contexts that are installed. -->
+    <context_mgr_path>{{ modx_install_dir }}/manager/</context_mgr_path>
+    <context_mgr_url>/manager/</context_mgr_url>
+    <context_connectors_path>{{ modx_install_dir }}/connectors/</context_connectors_path>
+    <context_connectors_url>/connectors/</context_connectors_url>
+    <context_web_path>{{ modx_install_dir }}/</context_web_path>
+    <context_web_url>/</context_web_url>
+
+    <!-- Whether or not to remove the setup/ directory after installation. -->
+    <remove_setup_directory>{{ modx_remove_setup_directory }}</remove_setup_directory>
+</modx>

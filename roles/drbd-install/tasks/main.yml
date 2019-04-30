@@ -1,0 +1,61 @@
+---
+# tasks file for drbd-install
+- name: check os version
+  fail: msg='OS is NOT CentOS 7.x'
+  when: ansible_distribution != 'CentOS' or ansible_distribution_major_version != '7'
+
+- name: Add elrepo rpm gpg key
+  rpm_key:
+    state: present
+    key: https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
+    
+- name: Add elrepo
+  yum:
+    name: http://elrepo.org/elrepo-release-7.0-3.el7.elrepo.noarch.rpm
+    state: present
+  
+- name: install drbd packages
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - kmod-drbd84
+    - drbd84-utils
+  register: rh_drbd_install_packages
+  
+- name: Check if all drbd soft packages were installed
+  set_fact:
+    drbd_install_packages: "{{ rh_drbd_install_packages is defined and rh_drbd_install_packages.changed }}"
+
+- name: drbd after install routins - selinux allow drbd, add drbd kernel module autoload, load kernel module drbd
+  shell: | 
+    semanage permissive -a drbd_t
+    echo drbd > /etc/modules-load.d/drbd.conf
+    modprobe drbd
+  when: drbd_install_packages | bool
+
+- name: Install drbd resource file
+  template:
+    src: "{{ cluster_drbd_src_cfg }}"
+    dest: "{{ cluster_drbd_dest_path }}"
+    owner: root
+    group: root
+    mode: '0644'
+  when: drbd_install_packages | bool
+
+# be warned at next step execution ansible not notified when command executed and not finishes this task
+# only keyboard interruption helps
+# maybe try to use command module
+#- name: Create and run drbd resource file. Don't forget to configure cluster)
+#  shell: | 
+#    "drbdadm create-md {{ cluster_drbd_res_name }}"
+#    "drbdadm up {{ cluster_drbd_res_name }}"
+#  when: drbd_install_packages | bool
+  
+- name: Create and run drbd resource file. Don't forget to configure cluster)
+  command: "{{ item }}"
+  with_items:
+    - "drbdadm create-md {{ cluster_drbd_res_name }}"
+    - "drbdadm up {{ cluster_drbd_res_name }}"
+  when: drbd_install_packages | bool
+

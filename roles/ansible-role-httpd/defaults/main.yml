@@ -1,0 +1,61 @@
+# roles/httpd/defaults/main.yml
+---
+
+httpd_access_log: logs/access_log
+httpd_access_log_ssl: logs/ssl_access_log
+httpd_document_root: '/var/www/html'
+httpd_error_log: logs/error_log
+httpd_error_log_ssl: logs/ssl_error_log
+httpd_extended_status: 'On'
+httpd_listen: 80
+httpd_listen_ssl: 443
+httpd_log_level: warn
+httpd_log_level_ssl: warn
+httpd_server_admin: root@localhost
+httpd_server_root: '/etc/httpd'
+# information about the server version, os, modules
+#https://httpd.apache.org/docs/2.4/mod/core.html#servertokens
+# prod 
+#httpd_server_tokens: Prod
+#dev
+httpd_server_tokens: Full
+httpd_server_signature: 'Off'
+httpd_keep_alive: 'On'
+httpd_ssl_certificate_file: localhost.crt
+httpd_ssl_certificate_key_file: localhost.key
+httpd_status_enable: false
+httpd_status_location: '/server-status'
+httpd_status_require: 'host localhost'
+
+# SSL configuration, "Modern profile" according to:
+# https://mozilla.github.io/server-side-tls/ssl-config-generator/?server=apache-2.4.34&openssl=1.1.0i&hsts=yes&profile=modern
+# more relevant to base centos7 repos 
+# https://mozilla.github.io/server-side-tls/ssl-config-generator/?server=apache-2.4.6&openssl=1.0.2k&hsts=yes&profile=modern
+httpd_ssl_cipher_suite: >
+  'EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH'
+httpd_ssl_compression: 'off'
+httpd_ssl_honor_cipher_order: 'on'
+httpd_ssl_protocol: 'all -SSLv2 -SSLv3 -TLSv1 -TLSv1.1'
+# next require Apache >= 2.4.11
+httpd_ssl_session_tickets: 'off'
+# default httpd_ssl_stapling_responder_timeout is 10
+httpd_ssl_stapling_responder_timeout: 5
+# default httpd_ssl_stapling_return_responder_errors is on
+httpd_ssl_stapling_return_responder_errors: 'off'
+# i also use 
+#Header always set Strict-Transport-Security "max-age=63072000; includeSubdomains"
+httpd_ssl_stapling_cache: 'shmcb:/var/run/ocsp(128000)'
+# my was:
+#httpd_ssl_stapling_cache: 'shmcb:logs/stapling-cache(150000)'
+httpd_ssl_use_stapling: 'on'
+
+httpd_confs_to_disable:
+    - "{{ httpd_welcome_config }}"
+    - "{{ httpd_autoindex_config }}"
+    - "{{ httpd_01_cgi_module }}"
+
+httpd_00_base_modules_to_disable:
+  - 'mod_include'
+  - 'mod_info'
+  - 'mod_userdir'
+  - 'mod_autoindex'
