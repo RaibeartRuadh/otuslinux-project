@@ -82,8 +82,8 @@ Vagrant.configure(2) do |config|
                 echo "retries=1" >> /etc/yum.conf
                 ln -sf /usr/share/zoneinfo/Europe/Moscow /etc/localtime
                 yum -y install epel-release
-                yum -y update
-                yum install -y vim tcpdump traceroute telnet nc
+                #yum -y update
+                #yum install -y vim tcpdump traceroute telnet nc
             SHELL
 
             if boxname.to_s == "firewall"
